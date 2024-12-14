@@ -7,6 +7,9 @@
 export/*
 logs/*
 diff/*
+output/*
+collected_ips/*
+scan_results/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

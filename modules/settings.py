@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     NMAP_PORT: int = os.getenv("NMAP_PORT", 22)
 
     # Output folder & files
-    OUTPUT_FOLDER: str = "output"
+    COLLECTED_IP_FOLDER: str = "collected_ips"
     COLLECTED_IP_FILENAME: str = "collected_ips.csv"
+    SCAN_RESULT_FOLDER: str = "scan_results"
     SCAN_RESULT_FILENAME: str = "ip_scan_results.csv"

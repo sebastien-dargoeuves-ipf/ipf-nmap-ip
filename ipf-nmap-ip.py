@@ -93,8 +93,8 @@ def collect_ips(
             for ip in all_managed_ips
         ]
         logger.info(f"Found {len(ip_list)} IPs after applying the filter: {settings.IP_EXCLUDE_FILTER}")
-    if collected_ip_file := export_to_csv(ip_list, collected_ip_file, settings.OUTPUT_FOLDER):
-        logger.success(f"Public IPs saved to {collected_ip_file}")
+    if collected_ip_file := export_to_csv(ip_list, collected_ip_file, settings.COLLECTED_IP_FOLDER):
+        logger.success(f"Collected IPs saved to {collected_ip_file}")
         return collected_ip_file
 
 
@@ -102,7 +102,7 @@ def collect_ips(
 @app.command("scan", help="Scan IP addresses using nmap.")
 def scan_ips(
     collected_ip_file: typer.FileText = typer.Option(
-        os.path.join(settings.OUTPUT_FOLDER,settings.COLLECTED_IP_FILENAME),
+        os.path.join(settings.COLLECTED_IP_FOLDER,settings.COLLECTED_IP_FILENAME),
         "-i",
         "--input",
         help="Name of the file containing the IP addresses to scan",
@@ -116,8 +116,9 @@ def scan_ips(
 ):
     ips_to_scan = read_file(collected_ip_file)
     scan_results = scan_ip_addresses(ips_to_scan, settings.NMAP_PORT)
-    if export_to_csv(scan_results, scan_result_file, settings.OUTPUT_FOLDER):
+    if scan_result_file:=export_to_csv(scan_results, scan_result_file, settings.SCAN_RESULT_FOLDER):
         logger.success(f"Scan results saved to {scan_result_file}")
+        return scan_result_file
     
 
 @app.command("all", help="Collect IP addresses from IP Fabric's Managed IP table.")

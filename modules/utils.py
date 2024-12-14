@@ -71,12 +71,13 @@ def export_to_csv(list, filename, output_folder) -> bool:
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    output_file = f"{output_folder}/{filename}"
+    output_file = Path(f"{output_folder}/{filename}")
     try:
         result = pd.DataFrame(list)
         result.to_csv(output_file, index=False)
-        logger.info(f"File `{output_file}` saved")
-        return Path(output_file)
+        # output_file = Path(output_file)
+        logger.info(f"File `{output_file.absolute()}` saved")
+        return output_file
     except Exception as e:
         logger.error(f"Error saving file `{output_file}`. Error: {e}")
         return False
