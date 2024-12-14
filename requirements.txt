@@ -1,0 +1,6 @@
+
+ipfabric~=6.10.0
+loguru
+pandas
+python-nmap
+python-dotenv
