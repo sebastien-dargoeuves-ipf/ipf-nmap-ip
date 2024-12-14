@@ -93,7 +93,6 @@ def read_file(filename) -> Union[dict, bool]:
         A pandas DataFrame representing the data in the CSV/XLSX file.
     """
     try:
-        from ipdb import set_trace as debug; debug()
         if filename.name.endswith(".csv"):
             df = pd.read_csv(filename.name)
             df.replace({np.nan: None}, inplace=True)

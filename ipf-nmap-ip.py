@@ -114,7 +114,6 @@ def scan_ips(
         help="Name of the file to output the scan results",
     ),
 ):
-    from ipdb import set_trace as debug; debug()
     ips_to_scan = read_file(collected_ip_file)
     scan_results = scan_ip_addresses(ips_to_scan, settings.NMAP_PORT)
     if export_to_csv(scan_results, scan_result_file, settings.OUTPUT_FOLDER):
