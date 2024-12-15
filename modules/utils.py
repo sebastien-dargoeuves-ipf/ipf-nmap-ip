@@ -11,8 +11,6 @@ import pandas as pd
 import typer
 from loguru import logger
 
-from modules.settings import Settings
-
 SCAN_RESULT_COLUMNS = [
     "IP",
     "-",
