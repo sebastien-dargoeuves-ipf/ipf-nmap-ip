@@ -11,6 +11,8 @@ import pandas as pd
 import typer
 from loguru import logger
 
+from modules.settings import Settings
+
 SCAN_RESULT_COLUMNS = [
     "IP",
     "-",
@@ -115,7 +117,7 @@ def read_file(filename) -> Union[dict, bool]:
         sys.exit()
 
 
-def scan_ip_addresses(ip_info_list, port):
+def scan_nmap_ip_addresses(ip_info_list, port):
     # Create a PortScanner object
     nm = nmap.PortScanner()
     results = []
@@ -168,3 +170,79 @@ def scan_ip_addresses(ip_info_list, port):
                 for info in batch
             )
     return results
+
+
+def select_file(folder: str):
+    # # Get the list of files in the folders
+    file_list = []
+    for root, dirs, files in os.walk(folder):
+        file_list.extend(os.path.join(root, file) for file in files)
+    if not file_list:
+        logger.warning(f"No files found in the '{folder}' folder, nothing to restore.")
+        return False
+    # Display the list of files with corresponding numbers
+    print(f"List of files in the '{folder}' folder:")
+    for i, filename in enumerate(file_list):
+        print(f"{i+1}. {filename}")
+
+    while True:
+        # Prompt for file selection
+        selection = typer.prompt("Enter the number corresponding to the file to read", type=int)
+
+        # Check if the selected number is within range
+        if 1 <= selection <= len(file_list):
+            # Get the selected file name
+            with open(file_list[selection - 1], "r") as f:
+                file = f
+            return file
+        else:
+            print("Selection outside the scope. Please select a valid number.")
+
+
+# def select_folder(settings: Settings, unattended: bool = False, latest_backup_folder: str = None):
+#     """
+#     Select a JSON folder for restoration.
+
+#     Args:
+#         settings (Settings): The settings object containing the folder path.
+#         unattended (bool): Flag indicating whether the selection should be done automatically without user interaction.
+
+#     Returns:
+#         List[str]: A list of file paths within the selected folder.
+#     """
+#     folder_list = []
+#     for root, dirs, files in os.walk(settings.FOLDER_JSON):
+#         folder_list.extend(
+#             os.path.join(root, dir)
+#             for dir in dirs
+#             if dir.endswith(settings.FOLDER_JSON_ORIGINAL_SN)
+#             or dir.endswith(settings.FOLDER_JSON_HOSTNAME)
+#             or dir.endswith(settings.FOLDER_JSON_NEW_SN)
+#         )
+#     if not folder_list:
+#         logger.warning(f"No files found in the '{settings.FOLDER_JSON}' folder, nothing to restore.")
+#         return False
+
+#     if unattended:
+#         folder_name = latest_backup_folder
+#     else:
+#         print(f"List of folders in the `{settings.FOLDER_JSON}` directory:")
+#         for i, folder_name in enumerate(folder_list):
+#             print(f"{i+1}. {folder_name}")
+
+#         while True:
+#             # Prompt for file selection
+#             selection = typer.prompt(
+#                 "Enter the number corresponding to the Folder to restore (ideally use a `xxx/w_hostname` folder)",
+#                 type=int,
+#             )
+
+#             # Check if the selected number is within range
+#             if 1 <= selection <= len(folder_list):
+#                 # Get the selected file name
+#                 folder_name = folder_list[selection - 1]
+#                 break
+#             else:
+#                 print("Selection outside the scope. Please select a valid number.")
+#     return [os.path.join(folder_name, file) for file in os.listdir(folder_name)]
+

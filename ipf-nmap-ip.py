@@ -10,7 +10,8 @@ from modules.utils import (
     ip_is_public,
     export_to_csv,
     read_file,
-    scan_ip_addresses,
+    select_file,
+    scan_nmap_ip_addresses,
 )
 
 settings = Settings()
@@ -102,20 +103,24 @@ def collect_ips(
 @app.command("scan", help="Scan IP addresses using nmap.")
 def scan_ips(
     collected_ip_file: typer.FileText = typer.Option(
-        os.path.join(settings.COLLECTED_IP_FOLDER,settings.COLLECTED_IP_FILENAME),
+        None,
         "-i",
         "--input",
         help="Name of the file containing the IP addresses to scan",
     ),
     scan_result_file: str = typer.Option(
-        settings.SCAN_RESULT_FILENAME,
+        None,
         "-o",
         "--output",
         help="Name of the file to output the scan results",
     ),
 ):
+    if not collected_ip_file:
+        collected_ip_file = select_file(settings.COLLECTED_IP_FOLDER)
+    if not scan_result_file:
+        scan_result_file = collected_ip_file.name.split("/")[-1]
     ips_to_scan = read_file(collected_ip_file)
-    scan_results = scan_ip_addresses(ips_to_scan, settings.NMAP_PORT)
+    scan_results = scan_nmap_ip_addresses(ips_to_scan, settings.NMAP_PORT)
     if scan_result_file:=export_to_csv(scan_results, scan_result_file, settings.SCAN_RESULT_FOLDER):
         logger.success(f"Scan results saved to {scan_result_file}")
         return scan_result_file
@@ -123,12 +128,6 @@ def scan_ips(
 
 @app.command("all", help="Collect IP addresses from IP Fabric's Managed IP table.")
 def collect_and_scan(
-    collected_ip_file: str = typer.Option(
-        settings.COLLECTED_IP_FILENAME,
-        "-o",
-        "--output",
-        help="Name of the file to output the list of IPs to scan",
-    ),
     only_public_ip: bool = typer.Option(
         False,
         "--public",
@@ -146,7 +145,7 @@ def collect_and_scan(
     """
     Collects public IP addresses from IP Fabric and generate a csv file
     """
-    collected_ip_file = collect_ips(collected_ip_file, only_public_ip)
+    collected_ip_file = collect_ips(settings.COLLECTED_IP_FILENAME, only_public_ip)
     with open(collected_ip_file, "r") as f:
         scan_ips(f, scan_result_file)
 
