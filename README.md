@@ -33,26 +33,44 @@ This project is a Python script that scans IP addresses using Nmap and saves the
 
 ## Usage
 
-1. Run the script:
+1. Collect IP addresses from IP Fabric:
 
     ```sh
-    python ipf-nmap-ip.py
+    python ipf-nmap-ip.py collect --output collected_ips.csv --public
     ```
 
-2. The script will:
-    - Initialize the IP Fabric client.
-    - Retrieve managed IP addresses from IP Fabric.
-    - Filter out private IP addresses.
-    - Scan the public IP addresses for a specified port (default is port 22).
-    - Save the scan results to a CSV file with a timestamped filename.
+    - `--output` (optional): Name of the file to output the list of IPs to scan.
+    - `--public` (optional): Only collect public IP addresses from IP Fabric.
+
+2. Scan the collected IP addresses:
+
+    ```sh
+    python ipf-nmap-ip.py scan --input collected_ips.csv --output scan_results.csv
+    ```
+
+    - `--input` (optional): Name of the file containing the IP addresses to scan.
+    - `--output` (optional): Name of the file to output the scan results.
+
+    If no `--input` is provided, the script will ask you to select a file from the `collected_ips` directory.
+
+3. Collect AND scan IP addresses in one step:
+
+    ```sh
+    python ipf-nmap-ip.py all --output scan_results.csv --public
+    #or
+    python ipf-nmap-ip.py all
+    ```
+
+    - `--output` (optional): Name of the file to output the scan results.
+    - `--public` (optional): Only collect public IP addresses from IP Fabric.
 
 ## Configuration
 
-- You can change the port to be scanned by modifying the `port_to_check` variable in the `main` function.
+- You can change the port to be scanned by modifying the `NMAP_PORT` variable in the `settings.py` file or by setting the `NMAP_PORT` environment variable.
 
 ## Logging
 
-- The script uses the `loguru` library for logging. Logs will be printed to the console.
+- The script uses the `loguru` library for logging. Logs will be printed to the console and saved to a log file in the `logs` directory.
 
 ## License
 
