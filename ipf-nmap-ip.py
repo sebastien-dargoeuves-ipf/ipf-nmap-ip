@@ -120,7 +120,7 @@ def scan_ips(
     if not scan_result_file:
         scan_result_file = collected_ip_file.name.split("/")[-1]
     ips_to_scan = read_file(collected_ip_file)
-    scan_results = scan_nmap_ip_addresses(ips_to_scan, settings.NMAP_PORT)
+    scan_results = scan_nmap_ip_addresses(ips_to_scan, settings.NMAP_PORTS)
     if scan_result_file:=export_to_csv(scan_results, scan_result_file, settings.SCAN_RESULT_FOLDER):
         logger.success(f"Scan results saved to {scan_result_file}")
         return scan_result_file

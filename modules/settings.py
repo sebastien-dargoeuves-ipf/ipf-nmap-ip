@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Regex pattern to exclude private IP addresses RFC1918
     IP_EXCLUDE_FILTER: str = os.getenv("IP_EXCLUDE_FILTER", "^(10\.|172\.(1[6-9]|2[0-9]|3[01])|192\.168\.)")
     # NMAP Port
-    NMAP_PORT: int = os.getenv("NMAP_PORT", 22)
+    NMAP_PORTS: str = os.getenv("NMAP_PORTS", "22-23,80,443")
 
     # Output folder & files
     COLLECTED_IP_FOLDER: str = "collected_ips"

@@ -2,5 +2,5 @@
 ipfabric~=6.10.0
 loguru
 pandas
-python-nmap
+python3-nmap
 python-dotenv

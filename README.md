@@ -66,7 +66,7 @@ This project is a Python script that scans IP addresses using Nmap and saves the
 
 ## Configuration
 
-- You can change the port to be scanned by modifying the `NMAP_PORT` variable in the `settings.py` file or by setting the `NMAP_PORT` environment variable.
+- You can change the port(s) to be scanned by modifying the `NMAP_PORTS` variable in the `settings.py` file or by setting the `NMAP_PORTS` environment variable. It has to be a string in the format `22-23,80,443`.
 
 ## Logging
 

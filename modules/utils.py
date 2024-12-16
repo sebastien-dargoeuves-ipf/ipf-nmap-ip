@@ -5,7 +5,7 @@ import sys
 from  pathlib import Path
 from typing import Union
 
-import nmap
+import nmap3
 import numpy as np
 import pandas as pd
 import typer
@@ -115,59 +115,88 @@ def read_file(filename) -> Union[dict, bool]:
         sys.exit()
 
 
-def scan_nmap_ip_addresses(ip_info_list, port):
+# def scan_nmap_ip_addresses_batches(ip_info_list, port):
+#     # Create a PortScanner object
+#     nm = nmap.PortScanner()
+#     nmap = nmap3.NmapScanTechniques()
+#     result = nmap.nmap_tcp_scan(TARGET, args="-p 22")
+#     results = []
+
+#     # Process IPs in batches of 5
+#     for i in range(0, len(ip_info_list), 5):
+#         batch = ip_info_list[i : i + 5]
+#         ip_string = " ".join(info["IP"] for info in batch)  # Extract IPs for the scan
+#         logger.info(f"Scanning batch {i + 1}-{i + len(batch)}: {ip_string}")
+
+#         try:
+#             # Perform the scan with -Pn option for the batch of IPs
+#             nm.scan(ip_string, str(port), arguments="-Pn")
+
+#             for info in batch:
+#                 ip = info["IP"]
+#                 # Initialize result for the current IP
+#                 result = {
+#                     "IP": ip,
+#                     "Device": info["Device"],
+#                     "Interface": info["Interface"],
+#                     "Status": nm[ip].state(),
+#                     "Port": port,
+#                     "Port State": None,
+#                     "Reason": None,
+#                 }
+
+#                 # Check the state of the specified port
+#                 if port in nm[ip]["tcp"]:
+#                     result["Port State"] = nm[ip]["tcp"][port]["state"]
+#                     result["Reason"] = nm[ip]["tcp"][port]["reason"]
+#                 else:
+#                     result["Port State"] = "not found"
+#                     result["Reason"] = "Port not found in scan results."
+
+#                 results.append(result)
+
+#         except Exception as e:
+#             logger.error(f"Error during scan for batch {ip_string}: {e}")
+#             results.extend(
+#                 {
+#                     "IP": info["IP"],
+#                     "Device": info["Device"],
+#                     "Interface": info["Interface"],
+#                     "Status": "down",
+#                     "Port": port,
+#                     "Port State": "error",
+#                     "Reason": str(e),
+#                 }
+#                 for info in batch
+#             )
+#     return results
+
+
+def scan_nmap_ip_addresses(ip_info_list: list, port: str = "22"):
     # Create a PortScanner object
-    nm = nmap.PortScanner()
-    results = []
+    nmap = nmap3.NmapScanTechniques()
+    ip_string = " ".join(info["IP"] for info in ip_info_list)  # Extract IPs for the scan
+    scan_result = nmap.nmap_tcp_scan(ip_string, args=f"-p {port} -Pn") # -Pn option to skip host discovery (no ping)
+    output = []
+    for info in ip_info_list:
+        ip = info["IP"]
+        # Initialize result for the current IP
+        for result_port in scan_result[ip]["ports"]:
+            result = {
+                "IP": ip,
+                "Device": info["Device"],
+                "Interface": info["Interface"],
+                "Protocol": result_port["protocol"],
+                "Port": result_port["portid"],
+                "Port State": result_port["state"],
+                "PortReason": result_port["reason"],
+                # "State": scan_result[ip]["state"]["state"],
+                # "Reason": scan_result[ip]["state"]["reason"],
+            }
 
-    # Process IPs in batches of 5
-    for i in range(0, len(ip_info_list), 5):
-        batch = ip_info_list[i : i + 5]
-        ip_string = " ".join(info["IP"] for info in batch)  # Extract IPs for the scan
-        logger.info(f"Scanning batch {i + 1}-{i + len(batch)}: {ip_string}")
+            output.append(result)
 
-        try:
-            # Perform the scan with -Pn option for the batch of IPs
-            nm.scan(ip_string, str(port), arguments="-Pn")
-
-            for info in batch:
-                ip = info["IP"]
-                # Initialize result for the current IP
-                result = {
-                    "IP": ip,
-                    "Device": info["Device"],
-                    "Interface": info["Interface"],
-                    "Status": nm[ip].state(),
-                    "Port": port,
-                    "Port State": None,
-                    "Reason": None,
-                }
-
-                # Check the state of the specified port
-                if port in nm[ip]["tcp"]:
-                    result["Port State"] = nm[ip]["tcp"][port]["state"]
-                    result["Reason"] = nm[ip]["tcp"][port]["reason"]
-                else:
-                    result["Port State"] = "not found"
-                    result["Reason"] = "Port not found in scan results."
-
-                results.append(result)
-
-        except Exception as e:
-            logger.error(f"Error during scan for batch {ip_string}: {e}")
-            results.extend(
-                {
-                    "IP": info["IP"],
-                    "Device": info["Device"],
-                    "Interface": info["Interface"],
-                    "Status": "down",
-                    "Port": port,
-                    "Port State": "error",
-                    "Reason": str(e),
-                }
-                for info in batch
-            )
-    return results
+    return output
 
 
 def select_file(folder: str):
