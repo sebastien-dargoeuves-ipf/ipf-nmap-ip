@@ -6,6 +6,14 @@ This project is a Python script that scans IP addresses using Nmap and saves the
 
 - Python 3.9+
 - IP Fabric account and API token
+- Nmap installed on your system
+- Python packages listed in the `requirements.txt` file:
+  - ipfabric # matching you IP Fabric appliance version
+  - loguru
+  - pandas
+  - python3-nmap
+  - typer
+  - yaspin # Optional for spinner
 
 ## Installation
 
@@ -42,15 +50,29 @@ This project is a Python script that scans IP addresses using Nmap and saves the
 1. Collect IP addresses from IP Fabric:
 
     ```sh
+    # Collect IP addresses not matching the IP_EXCLUDE_FILTER
+    python ipf-nmap-ip.py collect
+
+    # Collect IP addresses not matching the IP_EXCLUDE_FILTER but only keep public IP addresses (based on ipaddress.is_global)
+    python ipf-nmap-ip.py collect --public
+
+    # Specify the output file
     python ipf-nmap-ip.py collect --output collected_ips.csv --public
     ```
 
     - `--output` (optional): Name of the file to output the list of IPs to scan.
-    - `--public` (optional): Only collect public IP addresses from IP Fabric.
+    - `--public` (optional): Only keep public IP addresses from all IPs collected.
 
 2. Scan the collected IP addresses:
 
     ```sh
+    # Scan IP addresses from a file to be selected interactively, from the `collected_ips` directory
+    python ipf-nmap-ip.py scan
+
+    # Scan IP addresses from a file, output will match the input file name
+    python ipf-nmap-ip.py scan --input collected_ips.csv
+
+    # Scan IP addresses from a file and specify the output file
     python ipf-nmap-ip.py scan --input collected_ips.csv --output scan_results.csv
     ```
 
@@ -62,9 +84,11 @@ This project is a Python script that scans IP addresses using Nmap and saves the
 3. Collect AND scan IP addresses in one step:
 
     ```sh
-    python ipf-nmap-ip.py all --output scan_results.csv --public
-    #or
+    # Collect IP addresses and scan them
     python ipf-nmap-ip.py all
+
+    # Collect IP addresses and scan them, output will match the input file name
+    python ipf-nmap-ip.py all --output scan_results.csv --public
     ```
 
     - `--output` (optional): Name of the file to output the scan results.
