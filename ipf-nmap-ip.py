@@ -6,11 +6,11 @@ from loguru import logger
 
 from modules.settings import Settings
 from modules.utils import (
-    ip_is_public,
     export_to_csv,
+    ip_is_public,
     read_file,
-    select_file,
     scan_nmap_ip_addresses,
+    select_file,
 )
 
 settings = Settings()
@@ -61,8 +61,20 @@ def collect_ips(
     ),
 ):
     """
-    Collects public IP addresses from IP Fabric and generate a csv file
+    Collect IP addresses from IP Fabric's Managed IP table.
+
+    This function retrieves managed IP addresses from IP Fabric, with optional filtering for public IPs.
+    It exports the collected IP addresses to a CSV file for further processing.
+
+    Args:
+        collected_ip_file (str, optional): Name of the file to output the list of IPs to scan.
+            Defaults to settings.COLLECTED_IP_FILENAME.
+        only_public_ip (bool, optional): Flag to collect only public IP addresses. Defaults to False.
+
+    Returns:
+        str: Path to the generated CSV file containing collected IP addresses.
     """
+
     logger.info("Initializing IPFClient")
     ipf = IPFClient(
         base_url=settings.IPF_URL,
@@ -109,6 +121,23 @@ def scan_ips(
         help="Name of the file to output the scan results",
     ),
 ):
+    """
+    Scan IP addresses using nmap.
+
+    This function performs network scanning on a list of IP addresses using nmap. It allows users to specify input and output files for IP scanning and results.
+
+    The function handles file selection if no input file is provided, reads IP addresses, performs nmap scanning, and exports the results to a CSV file.
+
+    Args:
+        collected_ip_file (typer.FileText, optional): File containing IP addresses to scan.
+            If not provided, a file will be interactively selected.
+        scan_result_file (str, optional): Name of the file to output scan results.
+            If not provided, a default name will be generated.
+
+    Returns:
+        str: Path to the generated CSV file containing nmap scan results.
+    """
+
     if not collected_ip_file:
         collected_ip_file = select_file(settings.COLLECTED_IP_FOLDER)
     if not scan_result_file:
@@ -136,8 +165,21 @@ def collect_and_scan(
     ),
 ):
     """
-    Collects public IP addresses from IP Fabric and generate a csv file
+    Collect and scan IP addresses from IP Fabric's Managed IP table.
+
+    This function combines IP address collection and network scanning into a single workflow. It retrieves IP addresses from IP Fabric and then performs nmap scanning on the collected IPs.
+
+    The function allows optional filtering for public IPs and provides flexibility in specifying the output scan results filename.
+
+    Args:
+        only_public_ip (bool, optional): Flag to collect only public IP addresses. Defaults to False.
+        scan_result_file (str, optional): Name of the file to output scan results.
+            Defaults to settings.SCAN_RESULT_FILENAME.
+
+    Returns:
+        None
     """
+
     collected_ip_file = collect_ips(settings.COLLECTED_IP_FILENAME, only_public_ip)
     with open(collected_ip_file, "r") as f:
         scan_ips(f, scan_result_file)
