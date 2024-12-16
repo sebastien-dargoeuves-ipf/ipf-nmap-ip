@@ -2,7 +2,8 @@ import ipaddress
 import json
 import os
 import sys
-from  pathlib import Path
+import time
+from pathlib import Path
 from typing import Union
 
 import nmap3
@@ -10,18 +11,18 @@ import numpy as np
 import pandas as pd
 import typer
 from loguru import logger
+from rich.console import Console
 
-SCAN_RESULT_COLUMNS = [
-    "IP",
-    "-",
-    "Device",
-    "Interface",
-    "|",
-    "Status",
-    "Port"
-    "Port State",
-    "Reason",
-]
+try:
+    from yaspin import yaspin
+    from yaspin.spinners import Spinners
+
+    YASPIN_ANIMATION = True
+except ImportError:
+    YASPIN_ANIMATION = False
+
+console = Console()
+
 
 def ip_is_valid(ip):
     """Check if the given IP address is valid."""
@@ -32,6 +33,7 @@ def ip_is_valid(ip):
         logger.error(f"Invalid IP address: {ip}")
         return False  # Invalid IP addresses are treated as non-valid
 
+
 def ip_is_public(ip):
     """Check if the given IP address is public."""
     try:
@@ -41,6 +43,7 @@ def ip_is_public(ip):
         logger.error(f"Invalid IP address: {ip}")
         return False  # Invalid IP addresses are treated as non-public
 
+
 def file_to_json(input: typer.FileText) -> json:
     try:
         output = json.load(input)
@@ -48,6 +51,29 @@ def file_to_json(input: typer.FileText) -> json:
         logger.error(f"Error loading file `{input}`, not a valid json. Error: {e}")
         sys.exit()
     return output
+
+
+def run_with_rich_spinner(task_name: str, task_func, *args, **kwargs):
+    """
+    Run a task with a spinner.
+
+    Args:
+        task_name: The name of the task.
+        task_func: The function to run.
+        *args: The arguments to pass to the function.
+        **kwargs: The keyword arguments to pass to the function.
+
+    Returns:
+        The result of the task function.
+    """
+    logger.info(f"{task_name}...")
+    start_time = time.time()
+    with console.status(f"[bold yellow] {task_name}..."):
+        result = task_func(*args, **kwargs)
+    elapsed_time = time.time() - start_time
+    # console.log(f"completed in {elapsed_time:.2f} seconds")
+    logger.info(f"✅ {task_name} completed in {elapsed_time:.2f} seconds")
+    return result
 
 
 def export_to_csv(list, filename, output_folder) -> bool:
@@ -115,68 +141,39 @@ def read_file(filename) -> Union[dict, bool]:
         sys.exit()
 
 
-# def scan_nmap_ip_addresses_batches(ip_info_list, port):
-#     # Create a PortScanner object
-#     nm = nmap.PortScanner()
-#     nmap = nmap3.NmapScanTechniques()
-#     result = nmap.nmap_tcp_scan(TARGET, args="-p 22")
-#     results = []
+def scan_nmap_ip_addresses(ip_info_list: list, ports: str = "22"):
+    """
+    Scan IP addresses using nmap.
 
-#     # Process IPs in batches of 5
-#     for i in range(0, len(ip_info_list), 5):
-#         batch = ip_info_list[i : i + 5]
-#         ip_string = " ".join(info["IP"] for info in batch)  # Extract IPs for the scan
-#         logger.info(f"Scanning batch {i + 1}-{i + len(batch)}: {ip_string}")
+    Args:
+        ip_info_list: A list of dictionaries containing IP addresses and related information.
+        ports: The ports to scan, i.e., "22-23,80,443".
 
-#         try:
-#             # Perform the scan with -Pn option for the batch of IPs
-#             nm.scan(ip_string, str(port), arguments="-Pn")
-
-#             for info in batch:
-#                 ip = info["IP"]
-#                 # Initialize result for the current IP
-#                 result = {
-#                     "IP": ip,
-#                     "Device": info["Device"],
-#                     "Interface": info["Interface"],
-#                     "Status": nm[ip].state(),
-#                     "Port": port,
-#                     "Port State": None,
-#                     "Reason": None,
-#                 }
-
-#                 # Check the state of the specified port
-#                 if port in nm[ip]["tcp"]:
-#                     result["Port State"] = nm[ip]["tcp"][port]["state"]
-#                     result["Reason"] = nm[ip]["tcp"][port]["reason"]
-#                 else:
-#                     result["Port State"] = "not found"
-#                     result["Reason"] = "Port not found in scan results."
-
-#                 results.append(result)
-
-#         except Exception as e:
-#             logger.error(f"Error during scan for batch {ip_string}: {e}")
-#             results.extend(
-#                 {
-#                     "IP": info["IP"],
-#                     "Device": info["Device"],
-#                     "Interface": info["Interface"],
-#                     "Status": "down",
-#                     "Port": port,
-#                     "Port State": "error",
-#                     "Reason": str(e),
-#                 }
-#                 for info in batch
-#             )
-#     return results
-
-
-def scan_nmap_ip_addresses(ip_info_list: list, port: str = "22"):
-    # Create a PortScanner object
+    Returns:
+        A list of dictionaries containing the scan results.
+    """
     nmap = nmap3.NmapScanTechniques()
-    ip_string = " ".join(info["IP"] for info in ip_info_list)  # Extract IPs for the scan
-    scan_result = nmap.nmap_tcp_scan(ip_string, args=f"-p {port} -Pn") # -Pn option to skip host discovery (no ping)
+    ip_string = " ".join(info["IP"] for info in ip_info_list)
+    logger.info(f"Scanning IPs: {ip_string}")
+
+    # I like to use yaspin for the spinner due to the timer, but it's optional, we can default to rich spinner
+    if YASPIN_ANIMATION:
+        spinner = yaspin(
+            Spinners.bouncingBall,
+            text="NMAP Scanner",
+            timer=True,
+        )
+        spinner.start()
+        scan_result = nmap.nmap_tcp_scan(
+            ip_string, args=f"-p {ports} -Pn"
+        )  # -Pn option to skip host discovery (no ping)
+        spinner.ok("✅ ")
+        logger.success(f"✅ NMAP Scanner completed in {spinner.elapsed_time:.2f} seconds")
+    else:
+        scan_result = run_with_rich_spinner(
+            "NMAP Scanner", nmap.nmap_tcp_scan, ip_string, args=f"-p {ports} -Pn"
+        )  # -Pn option to skip host discovery (no ping)
+
     output = []
     for info in ip_info_list:
         ip = info["IP"]
@@ -224,52 +221,3 @@ def select_file(folder: str):
             return file
         else:
             print("Selection outside the scope. Please select a valid number.")
-
-
-# def select_folder(settings: Settings, unattended: bool = False, latest_backup_folder: str = None):
-#     """
-#     Select a JSON folder for restoration.
-
-#     Args:
-#         settings (Settings): The settings object containing the folder path.
-#         unattended (bool): Flag indicating whether the selection should be done automatically without user interaction.
-
-#     Returns:
-#         List[str]: A list of file paths within the selected folder.
-#     """
-#     folder_list = []
-#     for root, dirs, files in os.walk(settings.FOLDER_JSON):
-#         folder_list.extend(
-#             os.path.join(root, dir)
-#             for dir in dirs
-#             if dir.endswith(settings.FOLDER_JSON_ORIGINAL_SN)
-#             or dir.endswith(settings.FOLDER_JSON_HOSTNAME)
-#             or dir.endswith(settings.FOLDER_JSON_NEW_SN)
-#         )
-#     if not folder_list:
-#         logger.warning(f"No files found in the '{settings.FOLDER_JSON}' folder, nothing to restore.")
-#         return False
-
-#     if unattended:
-#         folder_name = latest_backup_folder
-#     else:
-#         print(f"List of folders in the `{settings.FOLDER_JSON}` directory:")
-#         for i, folder_name in enumerate(folder_list):
-#             print(f"{i+1}. {folder_name}")
-
-#         while True:
-#             # Prompt for file selection
-#             selection = typer.prompt(
-#                 "Enter the number corresponding to the Folder to restore (ideally use a `xxx/w_hostname` folder)",
-#                 type=int,
-#             )
-
-#             # Check if the selected number is within range
-#             if 1 <= selection <= len(folder_list):
-#                 # Get the selected file name
-#                 folder_name = folder_list[selection - 1]
-#                 break
-#             else:
-#                 print("Selection outside the scope. Please select a valid number.")
-#     return [os.path.join(folder_name, file) for file in os.listdir(folder_name)]
-

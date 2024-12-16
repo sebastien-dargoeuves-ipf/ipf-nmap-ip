@@ -1,4 +1,3 @@
-
 import os
 
 import typer
@@ -19,6 +18,7 @@ app = typer.Typer(
     add_completion=False,
     pretty_exceptions_show_locals=False,
 )
+
 
 @app.callback()
 def logging_configuration():
@@ -43,8 +43,6 @@ def logging_configuration():
         compression="tar.gz",
     )
     logger.info("---- NEW EXECUTION OF SCRIPT ----")
-
-
 
 
 @app.command("collect", help="Collect IP addresses from IP Fabric's Managed IP table.")
@@ -89,15 +87,11 @@ def collect_ips(
         ]
         logger.info(f"Found {len(ip_list)} public IPs after applying the filter: {settings.IP_EXCLUDE_FILTER}")
     else:
-        ip_list = [
-            {"IP": ip["ip"], "Device": ip["hostname"], "Interface": ip["intName"]}
-            for ip in all_managed_ips
-        ]
+        ip_list = [{"IP": ip["ip"], "Device": ip["hostname"], "Interface": ip["intName"]} for ip in all_managed_ips]
         logger.info(f"Found {len(ip_list)} IPs after applying the filter: {settings.IP_EXCLUDE_FILTER}")
     if collected_ip_file := export_to_csv(ip_list, collected_ip_file, settings.COLLECTED_IP_FOLDER):
         logger.success(f"Collected IPs saved to {collected_ip_file}")
         return collected_ip_file
-
 
 
 @app.command("scan", help="Scan IP addresses using nmap.")
@@ -121,10 +115,10 @@ def scan_ips(
         scan_result_file = collected_ip_file.name.split("/")[-1]
     ips_to_scan = read_file(collected_ip_file)
     scan_results = scan_nmap_ip_addresses(ips_to_scan, settings.NMAP_PORTS)
-    if scan_result_file:=export_to_csv(scan_results, scan_result_file, settings.SCAN_RESULT_FOLDER):
+    if scan_result_file := export_to_csv(scan_results, scan_result_file, settings.SCAN_RESULT_FOLDER):
         logger.success(f"Scan results saved to {scan_result_file}")
         return scan_result_file
-    
+
 
 @app.command("all", help="Collect IP addresses from IP Fabric's Managed IP table.")
 def collect_and_scan(
@@ -139,8 +133,7 @@ def collect_and_scan(
         "-o",
         "--output",
         help="Name of the file to output the scan results",
-    )
-
+    ),
 ):
     """
     Collects public IP addresses from IP Fabric and generate a csv file
@@ -148,6 +141,7 @@ def collect_and_scan(
     collected_ip_file = collect_ips(settings.COLLECTED_IP_FILENAME, only_public_ip)
     with open(collected_ip_file, "r") as f:
         scan_ips(f, scan_result_file)
+
 
 if __name__ == "__main__":
     app()
