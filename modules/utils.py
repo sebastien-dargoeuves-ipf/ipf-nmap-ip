@@ -66,13 +66,13 @@ def run_with_rich_spinner(task_name: str, task_func, *args, **kwargs):
     Returns:
         The result of the task function.
     """
-    logger.info(f"{task_name}...")
+    logger.info(f"Running {task_name}...")
     start_time = time.time()
     with console.status(f"[bold yellow] {task_name}..."):
         result = task_func(*args, **kwargs)
     elapsed_time = time.time() - start_time
     # console.log(f"completed in {elapsed_time:.2f} seconds")
-    logger.info(f"✅ {task_name} completed in {elapsed_time:.2f} seconds")
+    logger.success(f"✅ {task_name} completed in {elapsed_time:.2f} seconds")
     return result
 
 

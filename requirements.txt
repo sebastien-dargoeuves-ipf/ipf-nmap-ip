@@ -3,5 +3,5 @@ ipfabric~=6.10.0
 loguru
 pandas
 python3-nmap
-python-dotenv
+typer
 yaspin # Optional for spinner
