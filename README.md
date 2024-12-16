@@ -22,13 +22,19 @@ This project is a Python script that scans IP addresses using Nmap and saves the
     pip install -r requirements.txt
     ```
 
-3. Create a `.env` file in the project directory with the following variables:
+3. Create a `.env` file in the project directory with the following variables, you can copy the `.env.example` file and modify it:
 
     ```env
     IPF_URL=https://your-ipfabric-instance.com
     IPF_TOKEN=your_ipf_api_token
     IPF_VERIFY=True
     IPF_SNAPSHOT_ID=$last
+    
+    # IPs to exclude when collecting from IP Fabric
+    IP_EXCLUDE_FILTER = "(^10\.)|(^172\.1[6-9])|(^172\.2[0-9])|(^172\.3[0-1])|(^192\.168)" # RFC1918
+
+    # NMAP ports to scan
+    NMAP_PORTS="22-23,80,443"
     ```
 
 ## Usage

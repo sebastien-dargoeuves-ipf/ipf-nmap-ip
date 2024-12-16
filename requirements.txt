@@ -4,3 +4,4 @@ loguru
 pandas
 python3-nmap
 python-dotenv
+yaspin # Optional for spinner
