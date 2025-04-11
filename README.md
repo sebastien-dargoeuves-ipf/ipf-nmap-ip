@@ -98,6 +98,14 @@ This project is a Python script that scans IP addresses using Nmap and saves the
 
 - You can change the port(s) to be scanned by modifying the `NMAP_PORTS` variable in the `settings.py` file or by setting the `NMAP_PORTS` environment variable. It has to be a string in the format `22-23,80,443`.
 
+## Working with an external source of information
+
+To use this script to perform the nmap scanning, without using IP Fabric, you need to provide a csv file with the following columns:
+
+- `IP`: The IP address to scan.
+- `Device`: The device name (optional).
+- `Interface`: The interface name (optional).
+
 ## Logging
 
 - The script uses the `loguru` library for logging. Logs will be printed to the console and saved to a log file in the `logs` directory.
